@@ -1,0 +1,47 @@
+<!--
+    - Policies are applied in the order they appear.
+    - Position <base/> inside a section to inherit policies from the outer scope.
+    - Comments within policies are not preserved.
+-->
+<!-- Add policies as children to the <inbound>, <outbound>, <backend>, and <on-error> elements -->
+<policies>
+    <!-- Throttle, authorize, validate, cache, or transform the requests -->
+    <inbound>
+        <base />
+        <set-header name="x-request-id" exists-action="skip">
+            <value>@(Guid.NewGuid().ToString())</value>
+        </set-header>
+        <set-header name="x-b3-traceid" exists-action="skip">
+            <value>@(Guid.NewGuid().ToString("N").Substring(0, 16))</value>
+        </set-header>
+        <set-header name="x-b3-spanid" exists-action="skip">
+            <value>@(Guid.NewGuid().ToString("N").Substring(0, 16))</value>
+        </set-header>
+        <set-header name="x-b3-sampled" exists-action="skip">
+            <value>1</value>
+        </set-header>
+        <set-header name="x-ot-span-context" exists-action="skip">
+            <value>@(Guid.NewGuid().ToString())</value>
+        </set-header>
+        <set-header name="x-app-source" exists-action="skip">
+            <value>apim</value>
+        </set-header>
+        <set-header name="x-app-version" exists-action="skip">
+            <value>v1</value>
+        </set-header>
+    </inbound>
+    <!-- Control if and how the requests are forwarded to services  -->
+    <backend>
+        <base />
+    </backend>
+    <!-- Customize the responses -->
+    <outbound>
+        <base />
+        <set-header name="server" exists-action="delete" />
+        <set-header name="x-envoy-upstream-service-time" exists-action="delete" />
+    </outbound>
+    <!-- Handle exceptions and customize error responses  -->
+    <on-error>
+        <base />
+    </on-error>
+</policies>

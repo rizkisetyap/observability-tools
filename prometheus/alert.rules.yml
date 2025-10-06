@@ -1,0 +1,67 @@
+groups:
+  - name: app-status-alerts
+    rules:
+      - alert: AppDown
+        expr: up{instance=~".*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Aplikasi {{ $labels.instance }} tidak responsif"
+          description: "Aplikasi {{ $labels.instance }} tidak memberikan respons selama lebih dari 2 menit."
+
+      - alert: AppUp
+        expr: up{instance=~".*"} == 1
+        for: 1m
+        labels:
+          severity: info
+        annotations:
+          summary: "Aplikasi {{ $labels.instance }} kembali online"
+          description: "Aplikasi {{ $labels.instance }} sekarang responsif setelah sebelumnya down."
+
+  - name: app-alerts
+    rules:
+      - alert: HighRequestRate
+        expr: rate(http_requests_total{otel_scope_name="app.metrics"}[1m]) > 100
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Request rate terlalu tinggi"
+          description: "Jumlah request > 100 dalam 1 menit."
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{otel_scope_name="app.metrics",status="500"}[5m]) > 10
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error rate terlalu tinggi"
+          description: "500 error > 10 per 5 menit."
+
+      - alert: HighLoginRate
+        expr: rate(http_logins_total{otel_scope_name="app.metrics"}[5m]) > 10
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Login rate terlalu tinggi"
+          description: "Login > 10 per 5 menit."
+
+      - alert: HighRequestsInProgress
+        expr: http_requests_in_progress{otel_scope_name="app.metrics"} > 100
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Terlalu banyak request aktif"
+          description: "Lebih dari 100 request aktif saat ini."
+
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_ms_bucket{otel_scope_name="app.metrics"}[5m]))) > 500
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Latency P95 tinggi"
+          description: "P95 latency > 500ms"

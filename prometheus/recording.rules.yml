@@ -1,0 +1,61 @@
+groups:
+  - name: app.recording.rules
+    interval: 15s
+    rules:
+      # Login rate per second
+      - record: app:logins_rate
+        expr: rate(http_logins_total[1m])
+
+      # Total HTTP responses per status code
+      - record: app:http_status_total_by_code
+        expr: sum by (status) (rate(http_requests_total[1m]))
+
+      # 500 responses per endpoint
+      - record: app:http_500_total_by_endpoint
+        expr: sum by (endpoint) (rate(http_requests_total{status="500"}[1m]))
+
+      # In-progress requests
+      - record: app:requests_in_progress
+        expr: http_requests_in_progress
+
+      # Average request duration (overall)
+      - record: app:request_duration_avg_ms
+        expr: rate(http_request_duration_ms_sum[1m])
+              /
+              rate(http_request_duration_ms_count[1m])
+
+      # Total request count per endpoint
+      - record: app:request_count_per_endpoint
+        expr: sum by (endpoint) (rate(http_request_duration_ms_count[1m]))
+
+      # Average duration per endpoint
+      - record: app:request_duration_avg_by_endpoint
+        expr: sum by (endpoint) (rate(http_request_duration_ms_sum[1m])) 
+              / 
+              sum by (endpoint) (rate(http_request_duration_ms_count[1m]))
+
+      # p50 (median)
+      - record: app:request_duration_p50
+        expr: histogram_quantile(0.50, sum by (le, endpoint) (rate(http_request_duration_ms_bucket[1m])))
+
+      # p90
+      - record: app:request_duration_p90
+        expr: histogram_quantile(0.90, sum by (le, endpoint) (rate(http_request_duration_ms_bucket[1m])))
+
+      # p95
+      - record: app:request_duration_p95
+        expr: histogram_quantile(0.95, sum by (le, endpoint) (rate(http_request_duration_ms_bucket[1m])))
+
+      # p99
+      - record: app:request_duration_p99
+        expr: histogram_quantile(0.99, sum by (le, endpoint) (rate(http_request_duration_ms_bucket[1m])))
+
+      # Min (approximate)
+      - record: app:request_duration_min
+        expr: min_over_time((sum by (endpoint) (rate(http_request_duration_ms_sum[1m])) 
+              / sum by (endpoint) (rate(http_request_duration_ms_count[1m])))[1m:1m])
+
+      # Max (approximate)
+      - record: app:request_duration_max
+        expr: max_over_time((sum by (endpoint) (rate(http_request_duration_ms_sum[1m])) 
+              / sum by (endpoint) (rate(http_request_duration_ms_count[1m])))[1m:1m])

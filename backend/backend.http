@@ -1,0 +1,31 @@
+@backend_HostAddress = http://localhost:5164
+
+GET {{backend_HostAddress}}/
+Accept: application/json
+###
+
+GET {{backend_HostAddress}}/login/
+Accept: application/json
+###
+
+GET {{backend_HostAddress}}/error/
+###
+
+GET {{backend_HostAddress}}/metrics
+
+### Get all movies
+GET {{backend_HostAddress}}/movies/
+Accept: application/json
+
+### Get movie by ID
+GET {{backend_HostAddress}}/movies/1
+Accept: application/json
+
+### Health Check - Liveness
+GET {{backend_HostAddress}}/health/live
+Accept: application/json
+
+### Health Check - Readiness
+GET {{backend_HostAddress}}/health/ready
+Accept: application/json
+

@@ -1,0 +1,79 @@
+@startuml infra
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Solution Architecture Observability
+HIDE_STEREOTYPE()
+
+skinparam linetype ortho
+skinparam ArrowColor #555555
+skinparam ArrowFontColor #000000
+skinparam ArrowThickness 2
+
+Person(user, "User", "End User")
+
+Boundary(appNet, "Application Network") {
+
+  Boundary(backendApps, "Backend Services") {
+    Container(backend, "Backend Service", "API", "Main backend API service")
+    Container(movies, "Movies Service", "API", "Manages movie data")
+    Container(ratings, "Ratings Service", "API", "Manages ratings data")
+  }
+
+  Boundary(obsStack, "Observability Stack") {
+    Container(prometheus, "Prometheus", "Monitoring", "Metrics collection system") {
+    }
+    Container(alertManager, "Alert Manager", "Alerting", "Prometheus alert manager") {
+    }
+    Container(grafana, "Grafana", "Visualization", "Dashboard for metrics, logs and traces") {
+    }
+    Container(tempo, "Tempo", "Tracing", "Distributed tracing backend") {
+    }
+    Container(loki, "Loki", "Log Aggregation", "Stores and indexes application logs") {
+    }
+    Container(promtail, "Promtail", "Log Collector", "Collects logs and forwards to Loki") {
+    }
+    Container(k6, "k6", "Load Testing", "Performance testing tool") {
+    }
+  }
+
+}
+
+' User interactions
+user -[#0000FF]-> backend : "Uses API"
+user -[#0000FF]-> movies : "Uses API"
+user -[#0000FF]-> ratings : "Uses API"
+user -[#800080]-> grafana : "Views dashboards"
+
+' Backend flow
+backend -[#008000]-> movies : "Calls movie API"
+movies -[#008000]-> ratings : "Calls ratings API"
+backend -[#008000]-> ratings : "Calls ratings API"
+
+' Telemetry - Metrics
+prometheus -[#1E90FF]-> backend : "Scraping Metrics"
+prometheus -[#1E90FF]-> movies : "Scraping Metrics"
+prometheus -[#1E90FF]-> ratings : "Scraping Metrics"
+prometheus -[#1E90FF]-> grafana : "Metrics data"
+
+' Telemetry - Traces
+backend -[#FF8C00]-> tempo : "Sends traces (OTLP)"
+movies -[#FF8C00]-> tempo : "Sends traces (OTLP)"
+ratings -[#FF8C00]-> tempo : "Sends traces (OTLP)"
+
+' Alerting
+alertManager -[#DC143C]-> prometheus : "Receives alerts"
+
+' Logs (updated arrows)
+backend -[#32CD32]-> promtail : "Logs"
+movies -[#32CD32]-> promtail : "Logs"
+ratings -[#32CD32]-> promtail : "Logs"
+promtail -[#32CD32]-> loki : "Forwards logs"
+grafana -[#32CD32]-> loki : "Queries logs"
+
+' Load testing
+k6 -[#8A2BE2]-> backend : "Load tests"
+k6 -[#8A2BE2]-> movies : "Load tests"
+k6 -[#8A2BE2]-> ratings : "Load tests"
+
+@enduml

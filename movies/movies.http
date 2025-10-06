@@ -1,0 +1,23 @@
+@movies_HostAddress = http://localhost:5185
+### Get all movies
+GET {{movies_HostAddress}}/
+Accept: application/json
+
+### Get movie by ID
+GET {{movies_HostAddress}}/1
+Accept: application/json
+
+### Get ratings movie by ID
+GET {{movies_HostAddress}}/1/ratings
+Accept: application/json
+
+### Health Check - Liveness
+GET {{movies_HostAddress}}/health/live
+Accept: application/json
+
+### Health Check - Readiness
+GET {{movies_HostAddress}}/health/ready
+Accept: application/json
+
+### Get metrics
+GET {{movies_HostAddress}}/metrics

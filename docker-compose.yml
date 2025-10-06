@@ -1,0 +1,230 @@
+services:
+  backend:
+    build: ./backend
+    container_name: backend
+    labels:
+      logging: "promtail"
+      logging_jobname: "containerlogs"
+    ports:
+      - "5001:8080"
+    environment:
+      - MoviesApi__BaseUrl=http://movies:8080
+      - RatingsApi__BaseUrl=http://ratings:8080
+      - OpenTelemetry__Otlp__Endpoint=http://tempo:4317
+      - OpenTelemetry__Exporters__Traces=otlp
+      - OpenTelemetry__Exporters__Metrics=prometheus
+      - OpenTelemetry__Exporters__Logs=none
+      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__Microsoft__AspNetCore=Warning
+    networks:
+      - app-net
+    depends_on:
+      - movies
+      - ratings
+
+  movies:
+    build: ./movies
+    container_name: movies
+    labels:
+      logging: "promtail"
+      logging_jobname: "containerlogs"
+    ports:
+      - "5002:8080"
+    environment:
+      - RatingsApi__BaseUrl=http://ratings:8080
+      - OpenTelemetry__Otlp__Endpoint=http://tempo:4317
+      - OpenTelemetry__Exporters__Traces=otlp
+      - OpenTelemetry__Exporters__Metrics=prometheus
+      - OpenTelemetry__Exporters__Logs=none
+      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__Microsoft__AspNetCore=Warning
+    networks:
+      - app-net
+    depends_on:
+      - ratings
+
+  ratings:
+    build: ./ratings
+    container_name: ratings
+    labels:
+      logging: "promtail"
+      logging_jobname: "containerlogs"
+    ports:
+      - "5003:8080"
+    environment:
+      - OpenTelemetry__Otlp__Endpoint=http://tempo:4317
+      - OpenTelemetry__Exporters__Traces=otlp
+      - OpenTelemetry__Exporters__Metrics=prometheus
+      - OpenTelemetry__Exporters__Logs=none
+      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__Microsoft__AspNetCore=Warning
+
+    networks:
+      - app-net
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alert.rules.yml:/etc/prometheus/alert.rules.yml
+      - ./prometheus/recording.rules.yml:/etc/prometheus/recording.rules.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+#     depends_on:
+#       - otel-collector
+    networks:
+      - app-net
+
+#   jaeger:
+#     image: jaegertracing/all-in-one:latest
+#     container_name: jaeger
+#     ports:
+#       - "16686:16686"
+#       - "4317:4317"
+#       - "4318:4318"
+#     environment:
+#       - COLLECTOR_OTLP_ENABLED=true
+#       - SPAN_STORAGE_TYPE=elasticsearch
+#       - ES_SERVER_URLS=http://elasticsearch:9200
+#     restart: on-failure
+#     depends_on:
+#       - elasticsearch
+#       - otel-collector
+#     networks:
+#       - app-net
+
+#   elasticsearch:
+#     image: elasticsearch:7.17.10
+#     container_name: elasticsearch
+#     environment:
+#       - discovery.type=single-node
+#       - xpack.security.enabled=false
+#     ports:
+#       - "9200:9200"
+#     volumes:
+#       - elasticsearch-data:/usr/share/elasticsearch/data
+#     networks:
+#       - app-net
+
+  alert-manager:
+    image: prom/alertmanager
+    container_name: alert-manager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alert-manager/alert-manager.yml:/etc/alertmanager/alertmanager.yml
+    networks:
+      - app-net
+    depends_on:
+      - prometheus 
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor metricsSummary
+      - GF_INSTALL_PLUGINS=https://storage.googleapis.com/integration-artifacts/grafana-exploretraces-app/grafana-exploretraces-app-latest.zip;grafana-traces-app
+    volumes:
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - app-net
+    depends_on:
+      - prometheus 
+      - tempo
+      - loki
+
+  k6:
+    image: grafana/k6:latest
+    container_name: k6
+    volumes:
+      - ./k6/script.js:/script.js
+      - ./k6/results:/results
+    command: run /script.js
+    environment:
+      - BACKEND_URL=http://backend:8080
+      - MOVIE_URL=http://movies:8080
+      - RATING_URL=http://ratings:8080
+    networks:
+      - app-net
+    depends_on:
+      - backend
+      - movies
+      - ratings
+      - prometheus
+      - tempo
+  init-tempo:
+    image: grafana/tempo:latest
+    user: root
+    entrypoint:
+      - "chown"
+      - "10001:10001"
+      - "/var/tempo"
+    volumes:
+      - ./tempo/data:/var/tempo
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    ports:
+      - "3200:3200" # HTTP query
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    command: -config.file=/etc/tempo/config.yaml
+    volumes:
+      - ./tempo/config/config.yaml:/etc/tempo/config.yaml
+      - ./tempo/data:/var/tempo
+    networks:
+      - app-net
+    depends_on:
+      - init-tempo
+#   otel-collector: for next release use otel collector
+#     image: otel/opentelemetry-collector-contrib:0.95.0
+#     command: ["--config=/etc/otel-collector-config.yaml"]
+#     volumes:
+#       - ./otel/config.yaml:/etc/otel-collector-config.yaml
+#     ports:
+#       - "4317:4317"   # OTLP gRPC
+#       - "55681:55681" # OTLP HTTP (optional)
+#       - "8889:8889"   # metrics endpoint for Prometheus (optional)
+#     networks:
+#       - app-net
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml -config.expand-env=true
+    volumes:
+      - loki-data:/loki
+      - ./loki/config.yaml:/etc/loki/local-config.yaml
+    networks:
+      - app-net
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: promtail
+    volumes:
+      - ./promtail/config.yaml:/etc/promtail/config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock 
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - app-net
+    depends_on:
+      - loki
+
+networks:
+  app-net:
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:

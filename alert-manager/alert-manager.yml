@@ -1,0 +1,26 @@
+global:
+  resolve_timeout: 5m
+route:
+  group_by: [ alertname ]
+  receiver: 'teams-notifications' # default receiver
+  group_wait: 30s    # Waktu tunggu pertama sebelum mengirimkan notifikasi
+  group_interval: 30s  # Penundaan antara pemberitahuan berulang
+  repeat_interval: 30s # antara pengulangan notifikasi setelah alert pertama
+  routes:
+    - receiver: 'teams-notifications'
+      repeat_interval: 60s # antara pengulangan notifikasi setelah alert pertama
+      matchers:
+        - severity="info"
+        - severity="critical"
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'info'
+    equal: ['alertname', 'job']
+      
+receivers:
+  - name: teams-notifications
+    msteams_configs:
+      - webhook_url: https://webhook_url
+        send_resolved: true
