@@ -8,19 +8,19 @@ adalah agar kamu bisa belajar bagaimana cara memantau performa dan log aplikasi 
 
 ## 🎯 Tujuan Utama
 
-* Memantau performa aplikasi secara real-time
-* Mendeteksi dan merespons masalah secepat mungkin
-* Mengumpulkan dan menganalisis log aplikasi secara terpusat
-* Menguji beban trafik dengan tool khusus
-* Menampilkan data monitoring secara visual agar mudah dipahami
+- Memantau performa aplikasi secara real-time
+- Mendeteksi dan merespons masalah secepat mungkin
+- Mengumpulkan dan menganalisis log aplikasi secara terpusat
+- Menguji beban trafik dengan tool khusus
+- Menampilkan data monitoring secara visual agar mudah dipahami
 
 ---
 
 ## 🧱 Komponen Utama
 
 | Komponen                                      | Fungsi                                                                       |
-|-----------------------------------------------|------------------------------------------------------------------------------|
-| [**.NET Backend**](./Backend/README.md)       | Aplikasi API sederhana untuk dimonitor                                       |
+| --------------------------------------------- | ---------------------------------------------------------------------------- |
+| [**.NET Backend**](./backend/README.md)       | Aplikasi API sederhana untuk dimonitor                                       |
 | [**Movies Service**](./movies/README.md)      | Service penyedia data movie, saling terhubung dengan ratings dan backend     |
 | [**Ratings Service**](./ratings/README.md)    | Service penyedia data rating untuk aplikasi                                  |
 | [**Tempo**](./tempo/README.md)                | Distributed tracing untuk observabilitas aplikasi                            |
@@ -37,18 +37,18 @@ adalah agar kamu bisa belajar bagaimana cara memantau performa dan log aplikasi 
 ## 📁 Struktur Folder
 
 ```
-observability/  
-├── backend/               # Aplikasi .NET API  
-├── movies/                # Service penyedia data movie  
-├── ratings/               # Service penyedia data rating   
-├── prometheus/            # Konfigurasi Prometheus  
-├── grafana/               # Konfigurasi & Dashboard Grafana  
-├── alert-manager/         # Konfigurasi Alertmanager  
-├── loki/                  # Konfigurasi Loki  
+observability/
+├── backend/               # Aplikasi .NET API
+├── movies/                # Service penyedia data movie
+├── ratings/               # Service penyedia data rating
+├── prometheus/            # Konfigurasi Prometheus
+├── grafana/               # Konfigurasi & Dashboard Grafana
+├── alert-manager/         # Konfigurasi Alertmanager
+├── loki/                  # Konfigurasi Loki
 ├── promtail/              # Konfigurasi Promtail
-├── tempo/                 # Konfigurasi Tempo  
-├── k6/script.js           # Script untuk testing load menggunakan K6  
-├── docker-compose.yml     # File untuk menjalankan semua layanan  
+├── tempo/                 # Konfigurasi Tempo
+├── k6/script.js           # Script untuk testing load menggunakan K6
+├── docker-compose.yml     # File untuk menjalankan semua layanan
 ```
 
 ---
@@ -57,8 +57,8 @@ observability/
 
 ### 1. Pastikan Software Berikut Sudah Terinstal
 
-* [Docker & Docker Compose](https://docs.docker.com/get-docker/)
-* [.NET SDK (opsional, hanya jika ingin run backend secara lokal)](https://dotnet.microsoft.com/en-us/download)
+- [Docker & Docker Compose](https://docs.docker.com/get-docker/)
+- [.NET SDK (opsional, hanya jika ingin run backend secara lokal)](https://dotnet.microsoft.com/en-us/download)
 
 ### 2. Jalankan Semua Komponen
 
@@ -70,15 +70,15 @@ docker compose up -d
 
 ## 🌐 Akses Dashboard & Layanan
 
-| Layanan         | URL Lokal                                        | Keterangan                                 |
-|-----------------| ------------------------------------------------ |--------------------------------------------|
-| Grafana         | [http://localhost:3000](http://localhost:3000)   |                                            |
-| Prometheus      | [http://localhost:9090](http://localhost:9090)   | Query metrik langsung                      |
-| Alertmanager    | [http://localhost:9093](http://localhost:9093)   | Lihat alert yang aktif                     |
-| Loki API        | [http://localhost:3100](http://localhost:3100)   | Endpoint data log (digunakan oleh Grafana) |
-| .NET Backend    | [http://localhost:5001](http://localhost:5001)   | API utama yang dimonitor                   |
-| Movies Service  | [http://localhost:5002](http://localhost:5002)   | Service penyedia data movie                |
-| Ratings Service | [http://localhost:5003](http://localhost:5003)   | Service penyedia data rating               |
+| Layanan         | URL Lokal                                      | Keterangan                                 |
+| --------------- | ---------------------------------------------- | ------------------------------------------ |
+| Grafana         | [http://localhost:3000](http://localhost:3000) |                                            |
+| Prometheus      | [http://localhost:9090](http://localhost:9090) | Query metrik langsung                      |
+| Alertmanager    | [http://localhost:9093](http://localhost:9093) | Lihat alert yang aktif                     |
+| Loki API        | [http://localhost:3100](http://localhost:3100) | Endpoint data log (digunakan oleh Grafana) |
+| .NET Backend    | [http://localhost:5001](http://localhost:5001) | API utama yang dimonitor                   |
+| Movies Service  | [http://localhost:5002](http://localhost:5002) | Service penyedia data movie                |
+| Ratings Service | [http://localhost:5003](http://localhost:5003) | Service penyedia data rating               |
 
 ---
 
@@ -88,9 +88,9 @@ Grafana sudah diatur otomatis untuk menampilkan dashboard:
 • Dashboard File: [**grafana/dashboards/app-dashboard.json**](./grafana/dashboards/app-dashboard.json)
 • Data Source:
 
-* `Prometheus`: untuk metrik
-* `Tempo`: untuk tracing
-* `Loki`: untuk log container
+- `Prometheus`: untuk metrik
+- `Tempo`: untuk tracing
+- `Loki`: untuk log container
 
 ---
 
@@ -136,17 +136,18 @@ docker compose logs k6 -f
 
 ## 📚 Referensi
 
-* [OpenTelemetry](https://opentelemetry.io/docs/)
-* [Prometheus](https://prometheus.io/docs/)
-* [Grafana](https://grafana.com/docs/)
-* [Loki](https://grafana.com/docs/loki/latest/)
-* [Promtail](https://grafana.com/docs/loki/latest/clients/promtail/)
-* [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/)
-* [Tempo](https://grafana.com/docs/tempo/latest/)
-* [K6](https://k6.io/docs/)
-* [Docker Compose](https://docs.docker.com/compose/)
+- [OpenTelemetry](https://opentelemetry.io/docs/)
+- [Prometheus](https://prometheus.io/docs/)
+- [Grafana](https://grafana.com/docs/)
+- [Loki](https://grafana.com/docs/loki/latest/)
+- [Promtail](https://grafana.com/docs/loki/latest/clients/promtail/)
+- [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/)
+- [Tempo](https://grafana.com/docs/tempo/latest/)
+- [K6](https://k6.io/docs/)
+- [Docker Compose](https://docs.docker.com/compose/)
 
 ---
+
 ⚠️ Jika anda menggunakan Azure API Management, pastikan untuk mengatur policy untuk mengirim header `x-request-id` dll agar tracing dapat berfungsi dengan baik.
 
 - [APIM Policy](./policy.xml)
